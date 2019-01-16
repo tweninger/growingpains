@@ -10,6 +10,7 @@ with open('ts.txt', 'rb') as f:
             repo = line.split('/')[-1]
             try:
                 repo, user = repo.split('__')
+                user = user.lower().replace(',', '')
             except:
                 print(line)
                 continue
@@ -21,7 +22,7 @@ with open('ts.txt', 'rb') as f:
             try:
                 chash, gituser, ts = line.split('\t')
                 ts = int(ts)
-                ts_user[repouser][ts] = gituser
+                ts_user[repouser][ts] = gituser.lower().replace(',', '')
             except:
                 print(line)
 
@@ -45,7 +46,7 @@ with open('commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter
                 commit_counter = 0
                 repo, lib = line.split(',')
                 repo, user = repo.split('__')
-                user = user[:-15]
+                user = user[:-15].lower().replace(',', '')
                 repouser = '__'.join([repo,user])
 
                 if repouser not in ts_user:
@@ -70,7 +71,7 @@ with open('commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter
                 if author is '':
                     author = new_author
                 if  author is not '' and n > 0 and author != new_author:
-                    fwriter.write(repouser + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + '\n')
+                    fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + '\n')
                     author = new_author
                     commit_counter = 0
 
