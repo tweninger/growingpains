@@ -88,15 +88,12 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                 new_author = ts_user[repouser][t].encode('utf-8')
                 if author is '':
                     author = new_author
-                fwriter.write('\n')
                 currentauthor_commits = 0
                 if (running_p - running_n != 0):
                     percent_of_peak = (running_p - running_n + p - n)/(running_p - running_n)
-                    if (author != new_author):
-                        fwriter.write(str(percent_of_peak))
-                        fwriter.write('\n')
                     if  author is not '' and abs(percent_of_peak) <= .1 and author != new_author:
                         #fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
+                        fwriter.write('\n')
                         fwriter.write(str(running_p - running_n))
                         fwriter.write(',')
                         author = new_author
