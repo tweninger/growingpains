@@ -2,7 +2,8 @@ import json
 import numpy as np
 
 ts_user = dict()
-with open('ts.txt', 'rb') as f:
+i = 0
+with open('/data/tweninge/growingpains/ts.txt', 'rb') as f:
     repouser = ''
     for line in f:
         line = line.decode('utf-8', errors='ignore').strip()
@@ -25,10 +26,13 @@ with open('ts.txt', 'rb') as f:
                 ts_user[repouser][ts] = gituser.lower().replace(',', '')
             except:
                 print(line)
+        if (i % 10000) == 0:
+            print(i)
+        i = i + 1
 
 
 commits_dict = dict()
-with open('commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter:
+with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter:
     repo = ''
     lib = ''
     user = ''
@@ -44,11 +48,14 @@ with open('commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter
         try:
             if '__' in line:
                 commit_counter = 0
-                repo, lib = line.split(',')
-                repo, user = repo.split('__')
-                user = user[:-15].lower().replace(',', '')
-                repouser = '__'.join([repo,user])
-
+                repo, lib = line.encode('utf-8').split(',')
+                repo, user = repo.encode('utf-8').split('__')
+                user = user[:-15].encode('utf-8').lower().replace(',', '')
+                repouser = '__'.join([repo,user]).encode('utf-8')
+                running_p = float(0)
+                running_n = float(0)
+                current_totals = set()
+                current_totals.add(running_p - running_n)
                 if repouser not in ts_user:
                     repouser = ''
                 else:
@@ -67,90 +74,97 @@ with open('commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter
                 p = int(p)
                 n = int(n)
                 t = int(t)
-                new_author = ts_user[repouser][t]
+                running_p = running_p + p
+                running_n = running_n + n
+                current_totals.add(running_p - running_n)
+                new_author = ts_user[repouser][t].encode('utf-8')
                 if author is '':
                     author = new_author
-                if  author is not '' and n > 0 and author != new_author:
-                    fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + '\n')
-                    author = new_author
-                    commit_counter = 0
+                peak = max(current_totals)
+                if (peak != 0):
+                    percent_of_peak = (running_p - running_n)/peak
+                    if  author is not '' and abs(percent_of_peak) <= .1 and author != new_author:
+                        fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
+                        author = new_author
+                        commit_counter = 0
 
                 if repolib not in commits_dict:
                     commits_dict[repolib] = list()
                 commits_dict[repolib].append((c,p,n))
         except:
-            print('error', line)
-
-byteamsize = dict()
-for repolib in commits_dict:
-    repo, user = repolib.split('__')[:2]
-    repo = '__'.join([repo,user])
-    if repo not in repolib_user:
-        continue
-    teamsize = len(repolib_user[repo])
-    if teamsize in [3,4,5]:
-        teamsize = 3
-    if teamsize in [6,7,8,9]:
-        teamsize = 6
-    if teamsize >= 10:
-        teamsize = 10
-    if teamsize not in byteamsize:
-        byteamsize[teamsize] = list()
-    byteamsize[teamsize].append(commits_dict[repolib])
-
-cidmean = dict()
-for teamsize in sorted(byteamsize.keys()):
-    summer = 0
-    cidmean[teamsize] = list()
-    #commit_dist_pos = dict()
-    #commit_dist_neg = dict()
-    commit_dist_dif = dict()
-    commits = byteamsize[teamsize]
-    for repolib_commits in commits:
-        for cid, pos, neg in repolib_commits:
-            summer += 1
-            if cid not in commit_dist_dif:
-                #commit_dist_pos[cid] = list()
-                #commit_dist_neg[cid] = list()
-                commit_dist_dif[cid] = 0
-            #commit_dist_pos[cid].append(pos)
-            #commit_dist_neg[cid].append(neg)
-            commit_dist_dif[cid] += (pos - neg)
-
-    print('Team Size: ', teamsize)
-    #print('Positive')
-    #for cid in sorted(commit_dist_pos.keys()):
-    #    print(cid, np.mean(commit_dist_pos[cid]), np.median(commit_dist_pos[cid]), np.std(commit_dist_pos[cid]),
-    #          len(commit_dist_pos[cid]))
-    #print('Negative')
-    #for cid in sorted(commit_dist_neg.keys()):
-    #    print(cid, np.mean(commit_dist_neg[cid]), np.median(commit_dist_neg[cid]), np.std(commit_dist_neg[cid]),
-    #          len(commit_dist_neg[cid]))
-    #print('Difference')
-    #for cid in sorted(commit_dist_dif.keys()):
-    #    print(cid, np.mean(commit_dist_dif[cid]), np.median(commit_dist_dif[cid]), np.std(commit_dist_dif[cid]),
-    #          len(commit_dist_dif[cid]))
-
-    summean = 0
-    for cid in sorted(commit_dist_dif.keys()):
-        summean += commit_dist_dif[cid]/summer
-        cidmean[teamsize].append(summean)
+                print('error', line)
 
 
-for i in range(0,100):
-    print(i, end=',')
-    for teamsize in cidmean.keys():
-        print(cidmean[teamsize][i], end=',')
-    print()
+#byteamsize = dict()
+#for repolib in commits_dict:
+#    repo, user = repolib.split('__')[:2]
+#    repo = '__'.join([repo,user])
+#    if repo not in repolib_user:
+#        continue
+#    teamsize = len(repolib_user[repo])
+#    if teamsize in [3,4,5]:
+#        teamsize = 3
+#    if teamsize in [6,7,8,9]:
+#        teamsize = 6
+#    if teamsize >= 10:
+#        teamsize = 10
+#    if teamsize not in byteamsize:
+#        byteamsize[teamsize] = list()
+#    byteamsize[teamsize].append(commits_dict[repolib])
 
-print('Loaded')
+#cidmean = dict()
+#for teamsize in sorted(byteamsize.keys()):
+#    summer = 0
+#cidmean[teamsize] = list()
+#    #commit_dist_pos = dict()
+#    #commit_dist_neg = dict()
+#    commit_dist_dif = dict()
+#    commits = byteamsize[teamsize]
+#    for repolib_commits in commits:
+#        for cid, pos, neg in repolib_commits:
+#            summer += 1
+#if cid not in commit_dist_dif:
+#                #commit_dist_pos[cid] = list()
+#                #commit_dist_neg[cid] = list()
+#                commit_dist_dif[cid] = 0
+#            #commit_dist_pos[cid].append(pos)
+#            #commit_dist_neg[cid].append(neg)
+#            commit_dist_dif[cid] += (pos - neg)
 
-repos = json.load(open('github_all_repos.json', 'r'))
-for repo in repos['items']:
-    print(repo)
-    #'watchers_count'
-    #'stargazers_count'
-    #'open_issues'
-    #'forks'
-    break
+#    print('Team Size: ', teamsize)
+#    #print('Positive')
+#    #for cid in sorted(commit_dist_pos.keys()):
+#    #    print(cid, np.mean(commit_dist_pos[cid]), np.median(commit_dist_pos[cid]), np.std(commit_dist_pos[cid]),
+#    #          len(commit_dist_pos[cid]))
+#    #print('Negative')
+#    #for cid in sorted(commit_dist_neg.keys()):
+#    #    print(cid, np.mean(commit_dist_neg[cid]), np.median(commit_dist_neg[cid]), np.std(commit_dist_neg[cid]),
+#    #          len(commit_dist_neg[cid]))
+#    #print('Difference')
+#    #for cid in sorted(commit_dist_dif.keys()):
+#    #    print(cid, np.mean(commit_dist_dif[cid]), np.median(commit_dist_dif[cid]), np.std(commit_dist_dif[cid]),
+#    #          len(commit_dist_dif[cid]))
+
+#    summean = 0
+#    for cid in sorted(commit_dist_dif.keys()):
+#        summean += commit_dist_dif[cid]/summer
+#        cidmean[teamsize].append(summean)
+
+
+#for i in range(0,100):
+#    print(i, end=',')
+#    for teamsize in cidmean.keys():
+#        print(cidmean[teamsize][i], end=',')
+#    print()
+
+#print('Loaded')
+
+#repos = json.load(open('github_all_repos.json', 'r'))
+#for repo in repos['items']:
+#    print(repo)
+#    #'watchers_count'
+#    #'stargazers_count'
+#    #'open_issues'
+#    #'forks'
+#    break
 
