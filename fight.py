@@ -26,7 +26,7 @@ with open('/data/tweninge/growingpains/ts.txt', 'rb') as f:
                 ts_user[repouser][ts] = gituser.lower().replace(',', '')
             except:
                 print(line)
-        if (i % 10000) == 0:
+        if (i % 100000) == 0:
             print(i)
         i = i + 1
 
@@ -69,10 +69,10 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                 if i % 10000 == 0:
                     print(i, 'of 5,104,000')
                 flag = False
-                c = 0
-                p = 0
-                n = 0
-                t = 0
+                c = float(0)
+                p = float(0)
+                n = float(0)
+                t = float(0)
             else:
                 commit_counter += 1
                 if repouser == '':
@@ -80,23 +80,24 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                 previous_p = p
                 previous_n = n
                 c, p, n, t = line.split(',')
-                c = int(c)
-                p = int(p)
-                n = int(n)
-                t = int(t)
-                running_p = running_p + p
-                running_n = running_n + n
+                c = float(c)
+                p = float(p)
+                n = float(n)
+                t = float(t)
                 current_totals.add(running_p - running_n)
                 new_author = ts_user[repouser][t].encode('utf-8')
                 if author is '':
                     author = new_author
                 fwriter.write('\n')
                 currentauthor_commits = 0
-                if (previous_p - previous_n != 0):
-                    percent_of_peak = (p - n)/(previous_p - previous_n)
+                if (running_p - running_n != 0):
+                    percent_of_peak = (running_p - running_n + p - n)/(running_p - running_n)
+                    if (author != new_author):
+                        fwriter.write(str(percent_of_peak))
+                        fwriter.write('\n')
                     if  author is not '' and abs(percent_of_peak) <= .1 and author != new_author:
                         #fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
-                        fwriter.write(str(previous_p - previous_n))
+                        fwriter.write(str(running_p - running_n))
                         fwriter.write(',')
                         author = new_author
                         commit_counter = 0
@@ -114,6 +115,9 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                 if repolib not in commits_dict:
                     commits_dict[repolib] = list()
                 commits_dict[repolib].append((c,p,n))
+                running_p = running_p + p
+                running_n = running_n + n
+
         except:
             print('error', line)
 
