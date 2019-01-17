@@ -32,7 +32,7 @@ with open('/data/tweninge/growingpains/ts.txt', 'rb') as f:
 
 
 commits_dict = dict()
-with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('fights.txt', 'w') as fwriter:
+with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('fights_after_cut2.txt', 'w') as fwriter:
     repo = ''
     lib = ''
     user = ''
@@ -41,6 +41,7 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
 
     author = ''
     commit_counter = 0
+    flag = False
     for line in f:
         #if i > 50000:
         #    break
@@ -63,12 +64,21 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                     if len(userset) < 2:
                         repouser = ''
                 i += 1
+                if i == 50000:
+                    break
                 if i % 10000 == 0:
                     print(i, 'of 5,104,000')
+                flag = False
+                c = 0
+                p = 0
+                n = 0
+                t = 0
             else:
                 commit_counter += 1
                 if repouser == '':
                     continue
+                previous_p = p
+                previous_n = n
                 c, p, n, t = line.split(',')
                 c = int(c)
                 p = int(p)
@@ -80,19 +90,32 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                 new_author = ts_user[repouser][t].encode('utf-8')
                 if author is '':
                     author = new_author
-                peak = max(current_totals)
-                if (peak != 0):
-                    percent_of_peak = (running_p - running_n)/peak
+                fwriter.write('\n')
+                currentauthor_commits = 0
+                if (previous_p - previous_n != 0):
+                    percent_of_peak = (p - n)/(previous_p - previous_n)
                     if  author is not '' and abs(percent_of_peak) <= .1 and author != new_author:
-                        fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
+                        #fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
+                        fwriter.write(str(previous_p - previous_n))
+                        fwriter.write(',')
                         author = new_author
                         commit_counter = 0
-
+                        currentauthor_commits = p - n
+                        flag = True
+                    elif author is not '' and flag and author != new_author:
+                        fwriter.write(str(currentauthor_commits))
+                        fwriter.write(',')
+                        currentauthor_commits = p - n
+                        #fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
+                        author = new_author
+                        commit_counter = 0
+                    elif flag:
+                        currentauthor_commits = currentauthor_commits + p - n
                 if repolib not in commits_dict:
                     commits_dict[repolib] = list()
                 commits_dict[repolib].append((c,p,n))
         except:
-                print('error', line)
+            print('error', line)
 
 
 #byteamsize = dict()
