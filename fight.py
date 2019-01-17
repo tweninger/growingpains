@@ -48,6 +48,9 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
         line = line.strip()
         try:
             if '__' in line:
+                if flag:
+                    fwriter.write(str(currentauthor_commits))
+                    fwriter.write('\n')
                 commit_counter = 0
                 repo, lib = line.encode('utf-8').split(',')
                 repo, user = repo.encode('utf-8').split('__')
@@ -93,7 +96,6 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                     percent_of_peak = (running_p - running_n + p - n)/(running_p - running_n)
                     if  author is not '' and abs(percent_of_peak) <= .1 and author != new_author:
                         #fwriter.write(repouser + ',' + lib + ',' + author + ',' + new_author + ',' + str(c) + ',' + str(t) + ',' + str(p) + ',' + str(n) + ',' + str(len(userset)) + ',' + str(commit_counter) + ',' + str(running_p) + ',' + str(running_n) + ',' + str(peak) + '\n')
-                        fwriter.write('\n')
                         fwriter.write(str(running_p - running_n))
                         fwriter.write(',')
                         author = new_author
