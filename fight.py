@@ -112,6 +112,10 @@ with open('/data/tweninge/growingpains/commit_dictionary.txt', 'r') as f, open('
                 elif (running_p - running_n != 0):
                     percent_of_peak = (running_p - running_n + p - n)/(running_p - running_n)
                     if  author is not '' and abs(percent_of_peak) <= .1 and author != new_author and (running_p - running_n) > 0:
+                        fwriter.write(str(repouser))
+                        fwriter.write(',')
+                        fwriter.write(str(lib))
+                        fwriter.write(',')
                         fwriter.write(str(running_p - running_n))
                         fwriter.write(':')
                         fwriter.write(str(author))
