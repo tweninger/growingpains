@@ -1,6 +1,6 @@
 import pandas as pd
 
-f90fights = pd.read_csv('fights2.txt', usecols=[0], header=None, names=['Repo'])
+f90fights = pd.read_csv('fights90.txt', usecols=[0], header=None, names=['Repo'])
 
 f90fights = f90fights.groupby('Repo').last()
 
@@ -9,7 +9,12 @@ f90fights.columns = ['Repo', 'Size']
 f90fights = f90fights.drop(['Size'], axis=1)
 teamsize = pd.read_csv('repo_by_teamsize.txt', header=None, names=['Repo', 'Team Size'])
 f90fights_team = teamsize.merge(f90fights, on='Repo', how='inner')
+f90fights_team = f90fights_team.groupby(['Repo', 'Team Size']).last()
 
+f90fights_team = pd.DataFrame(data=f90fights_team, columns=['Repo2', 'Team Size2']).reset_index()
+print(f90fights_team)
+f90fights_team = f90fights_team.drop(['Repo2', 'Team Size2'], axis=1)
+print(f90fights_team)
 
 f90fights_teamsize = f90fights_team.groupby('Team Size').agg(['count'])
 normal_teamsize = teamsize.groupby('Team Size').agg(['count'])
